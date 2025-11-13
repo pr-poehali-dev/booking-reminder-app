@@ -17,6 +17,21 @@ const Index = () => {
   const [blockedDates, setBlockedDates] = useState<Date[]>([]);
   const [services, setServices] = useState<Array<{id: string, title: string, price: string, duration: string, description: string, icon: string}>>([]);
   const [serviceForm, setServiceForm] = useState({ title: '', price: '', duration: '', description: '', icon: 'Camera' });
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    clientName: string;
+    phone: string;
+    message: string;
+    sendDate: Date;
+    channel: 'whatsapp' | 'telegram' | 'both';
+    status: 'scheduled' | 'sent' | 'failed';
+  }>>([]);
+  const [notificationForm, setNotificationForm] = useState({
+    message: '',
+    sendDate: '',
+    sendTime: '',
+    channel: 'whatsapp' as 'whatsapp' | 'telegram' | 'both'
+  });
 
   const handleBooking = (formData: FormData) => {
     if (!date) {
@@ -431,13 +446,148 @@ const Index = () => {
                                     rows={4}
                                   />
                                 </div>
-                                <Button className="w-full" onClick={() => toast.success('Напоминание настроено!')}>
-                                  <Icon name="Send" size={16} className="mr-2" />
-                                  Настроить WhatsApp напоминание
-                                </Button>
+                                <div className="space-y-2">
+                                  <div>
+                                    <Label>Канал отправки</Label>
+                                    <select className="w-full mt-2 p-2 border border-input rounded-md bg-background">
+                                      <option>WhatsApp</option>
+                                      <option>Telegram</option>
+                                      <option>Оба канала</option>
+                                    </select>
+                                  </div>
+                                  <Button className="w-full" onClick={() => toast.success('Напоминание настроено!')}>
+                                    <Icon name="Send" size={16} className="mr-2" />
+                                    Настроить напоминание
+                                  </Button>
+                                </div>
                               </div>
                             </DialogContent>
                           </Dialog>
+                        </div>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="text-2xl font-semibold text-primary mb-6 flex items-center">
+                  <Icon name="Bell" size={24} className="mr-2" />
+                  Уведомления ({notifications.filter(n => n.status === 'scheduled').length})
+                </h3>
+                <div className="space-y-3 mb-4">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="w-full">
+                        <Icon name="Plus" size={16} className="mr-2" />
+                        Создать уведомление
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Запланировать уведомление</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        const [hours, minutes] = notificationForm.sendTime.split(':');
+                        const sendDateTime = new Date(notificationForm.sendDate);
+                        sendDateTime.setHours(parseInt(hours), parseInt(minutes));
+                        
+                        const newNotification = {
+                          id: Date.now().toString(),
+                          clientName: 'Массовая рассылка',
+                          phone: 'Все клиенты',
+                          message: notificationForm.message,
+                          sendDate: sendDateTime,
+                          channel: notificationForm.channel,
+                          status: 'scheduled' as const
+                        };
+                        
+                        setNotifications([...notifications, newNotification]);
+                        setNotificationForm({ message: '', sendDate: '', sendTime: '', channel: 'whatsapp' });
+                        toast.success('Уведомление запланировано!');
+                      }} className="space-y-4 py-4">
+                        <div>
+                          <Label>Канал отправки</Label>
+                          <select 
+                            className="w-full mt-2 p-2 border border-input rounded-md bg-background"
+                            value={notificationForm.channel}
+                            onChange={(e) => setNotificationForm({...notificationForm, channel: e.target.value as any})}
+                          >
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="both">Оба канала</option>
+                          </select>
+                        </div>
+                        <div>
+                          <Label>Дата отправки</Label>
+                          <Input 
+                            type="date"
+                            value={notificationForm.sendDate}
+                            onChange={(e) => setNotificationForm({...notificationForm, sendDate: e.target.value})}
+                            min={new Date().toISOString().split('T')[0]}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label>Время отправки</Label>
+                          <Input 
+                            type="time"
+                            value={notificationForm.sendTime}
+                            onChange={(e) => setNotificationForm({...notificationForm, sendTime: e.target.value})}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label>Текст сообщения</Label>
+                          <Textarea 
+                            value={notificationForm.message}
+                            onChange={(e) => setNotificationForm({...notificationForm, message: e.target.value})}
+                            placeholder="Привет! Напоминаем о предстоящей фотосессии... 📸"
+                            rows={4}
+                            required
+                          />
+                        </div>
+                        <Button type="submit" className="w-full">
+                          <Icon name="Send" size={16} className="mr-2" />
+                          Запланировать
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {notifications.filter(n => n.status === 'scheduled').length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">Нет запланированных уведомлений</p>
+                  ) : (
+                    notifications.filter(n => n.status === 'scheduled').map(notification => (
+                      <Card key={notification.id} className="p-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge variant={notification.channel === 'whatsapp' ? 'default' : notification.channel === 'telegram' ? 'secondary' : 'outline'}>
+                                  {notification.channel === 'whatsapp' ? 'WhatsApp' : notification.channel === 'telegram' ? 'Telegram' : 'Оба'}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {notification.sendDate.toLocaleDateString('ru-RU')} в {notification.sendDate.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                {notification.message}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setNotifications(notifications.filter(n => n.id !== notification.id));
+                                toast.success('Уведомление отменено');
+                              }}
+                            >
+                              <Icon name="Trash2" size={14} />
+                            </Button>
+                          </div>
                         </div>
                       </Card>
                     ))
