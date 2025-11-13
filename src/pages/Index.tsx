@@ -15,30 +15,8 @@ const Index = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [bookings, setBookings] = useState<Array<{id: string, date: Date, name: string, phone: string}>>([]);
   const [blockedDates, setBlockedDates] = useState<Date[]>([]);
-
-  const services = [
-    {
-      title: 'Семейная фотосессия',
-      price: '5 000 ₽',
-      duration: '2 часа',
-      description: 'Естественные кадры с близкими людьми',
-      icon: 'Users'
-    },
-    {
-      title: 'Индивидуальная съёмка',
-      price: '3 500 ₽',
-      duration: '1 час',
-      description: 'Портфолио или личная фотосессия',
-      icon: 'User'
-    },
-    {
-      title: 'Love Story',
-      price: '6 000 ₽',
-      duration: '3 часа',
-      description: 'Романтичная прогулка для двоих',
-      icon: 'Heart'
-    }
-  ];
+  const [services, setServices] = useState<Array<{id: string, title: string, price: string, duration: string, description: string, icon: string}>>([]);
+  const [serviceForm, setServiceForm] = useState({ title: '', price: '', duration: '', description: '', icon: 'Camera' });
 
   const handleBooking = (formData: FormData) => {
     if (!date) {
@@ -108,27 +86,134 @@ const Index = () => {
 
       <section id="services" className="py-20 bg-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-5xl font-bold text-center text-primary mb-12">Услуги</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {services.map((service, idx) => (
-              <Card key={idx} className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-border animate-fade-in">
-                <CardContent className="pt-8">
-                  <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-6 mx-auto">
-                    <Icon name={service.icon} size={32} className="text-accent" />
-                  </div>
-                  <h3 className="text-2xl font-semibold text-primary mb-3 text-center">{service.title}</h3>
-                  <p className="text-muted-foreground mb-4 text-center">{service.description}</p>
-                  <div className="flex justify-center gap-3 mb-4">
-                    <Badge variant="secondary" className="text-sm">
-                      <Icon name="Clock" size={14} className="mr-1" />
-                      {service.duration}
-                    </Badge>
-                  </div>
-                  <p className="text-3xl font-bold text-accent text-center">{service.price}</p>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex items-center justify-between mb-12 max-w-6xl mx-auto">
+            <h2 className="text-5xl font-bold text-primary">Услуги</h2>
+            {isAdmin && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Icon name="Plus" size={20} className="mr-2" />
+                    Добавить услугу
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Новая услуга</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    const newService = {
+                      id: Date.now().toString(),
+                      ...serviceForm
+                    };
+                    setServices([...services, newService]);
+                    setServiceForm({ title: '', price: '', duration: '', description: '', icon: 'Camera' });
+                    toast.success('Услуга добавлена!');
+                  }} className="space-y-4 py-4">
+                    <div>
+                      <Label>Название</Label>
+                      <Input 
+                        value={serviceForm.title}
+                        onChange={(e) => setServiceForm({...serviceForm, title: e.target.value})}
+                        placeholder="Семейная фотосессия"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Цена</Label>
+                      <Input 
+                        value={serviceForm.price}
+                        onChange={(e) => setServiceForm({...serviceForm, price: e.target.value})}
+                        placeholder="5 000 ₽"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Длительность</Label>
+                      <Input 
+                        value={serviceForm.duration}
+                        onChange={(e) => setServiceForm({...serviceForm, duration: e.target.value})}
+                        placeholder="2 часа"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Описание</Label>
+                      <Textarea 
+                        value={serviceForm.description}
+                        onChange={(e) => setServiceForm({...serviceForm, description: e.target.value})}
+                        placeholder="Краткое описание услуги"
+                        rows={3}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Иконка</Label>
+                      <select 
+                        className="w-full p-2 border border-input rounded-md bg-background"
+                        value={serviceForm.icon}
+                        onChange={(e) => setServiceForm({...serviceForm, icon: e.target.value})}
+                      >
+                        <option value="Camera">Камера</option>
+                        <option value="Users">Группа</option>
+                        <option value="User">Человек</option>
+                        <option value="Heart">Сердце</option>
+                        <option value="Baby">Ребёнок</option>
+                        <option value="Home">Дом</option>
+                        <option value="Sparkles">Звёзды</option>
+                      </select>
+                    </div>
+                    <Button type="submit" className="w-full">
+                      <Icon name="Check" size={16} className="mr-2" />
+                      Сохранить
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
+          {services.length === 0 ? (
+            <div className="text-center py-20">
+              <Icon name="Camera" size={64} className="text-muted-foreground/30 mx-auto mb-4" />
+              <p className="text-xl text-muted-foreground">
+                {isAdmin ? 'Добавьте первую услугу' : 'Услуги скоро появятся'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {services.map((service) => (
+                <Card key={service.id} className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-border animate-fade-in relative group">
+                  <CardContent className="pt-8">
+                    {isAdmin && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          setServices(services.filter(s => s.id !== service.id));
+                          toast.success('Услуга удалена');
+                        }}
+                      >
+                        <Icon name="Trash2" size={14} />
+                      </Button>
+                    )}
+                    <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-6 mx-auto">
+                      <Icon name={service.icon} size={32} className="text-accent" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-primary mb-3 text-center">{service.title}</h3>
+                    <p className="text-muted-foreground mb-4 text-center">{service.description}</p>
+                    <div className="flex justify-center gap-3 mb-4">
+                      <Badge variant="secondary" className="text-sm">
+                        <Icon name="Clock" size={14} className="mr-1" />
+                        {service.duration}
+                      </Badge>
+                    </div>
+                    <p className="text-3xl font-bold text-accent text-center">{service.price}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
