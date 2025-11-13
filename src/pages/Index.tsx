@@ -185,17 +185,101 @@ const Index = () => {
                 <Card key={service.id} className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-border animate-fade-in relative group">
                   <CardContent className="pt-8">
                     {isAdmin && (
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => {
-                          setServices(services.filter(s => s.id !== service.id));
-                          toast.success('Услуга удалена');
-                        }}
-                      >
-                        <Icon name="Trash2" size={14} />
-                      </Button>
+                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setServiceForm({
+                                title: service.title,
+                                price: service.price,
+                                duration: service.duration,
+                                description: service.description,
+                                icon: service.icon
+                              })}
+                            >
+                              <Icon name="Pencil" size={14} />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Редактировать услугу</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={(e) => {
+                              e.preventDefault();
+                              setServices(services.map(s => 
+                                s.id === service.id ? { ...s, ...serviceForm } : s
+                              ));
+                              toast.success('Услуга обновлена!');
+                            }} className="space-y-4 py-4">
+                              <div>
+                                <Label>Название</Label>
+                                <Input 
+                                  value={serviceForm.title}
+                                  onChange={(e) => setServiceForm({...serviceForm, title: e.target.value})}
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label>Цена</Label>
+                                <Input 
+                                  value={serviceForm.price}
+                                  onChange={(e) => setServiceForm({...serviceForm, price: e.target.value})}
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label>Длительность</Label>
+                                <Input 
+                                  value={serviceForm.duration}
+                                  onChange={(e) => setServiceForm({...serviceForm, duration: e.target.value})}
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label>Описание</Label>
+                                <Textarea 
+                                  value={serviceForm.description}
+                                  onChange={(e) => setServiceForm({...serviceForm, description: e.target.value})}
+                                  rows={3}
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label>Иконка</Label>
+                                <select 
+                                  className="w-full p-2 border border-input rounded-md bg-background"
+                                  value={serviceForm.icon}
+                                  onChange={(e) => setServiceForm({...serviceForm, icon: e.target.value})}
+                                >
+                                  <option value="Camera">Камера</option>
+                                  <option value="Users">Группа</option>
+                                  <option value="User">Человек</option>
+                                  <option value="Heart">Сердце</option>
+                                  <option value="Baby">Ребёнок</option>
+                                  <option value="Home">Дом</option>
+                                  <option value="Sparkles">Звёзды</option>
+                                </select>
+                              </div>
+                              <Button type="submit" className="w-full">
+                                <Icon name="Check" size={16} className="mr-2" />
+                                Сохранить изменения
+                              </Button>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            setServices(services.filter(s => s.id !== service.id));
+                            toast.success('Услуга удалена');
+                          }}
+                        >
+                          <Icon name="Trash2" size={14} />
+                        </Button>
+                      </div>
                     )}
                     <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-6 mx-auto">
                       <Icon name={service.icon} size={32} className="text-accent" />
